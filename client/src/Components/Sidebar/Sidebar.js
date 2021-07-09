@@ -1,9 +1,9 @@
-import React from 'react';
-
+import Conversation from "./Conversation";
 const Sidebar = () => {
     return (
         <div>
-            <h2>This is Sidebar</h2>
+            <h2>Recent Conversation</h2>
+            <Conversation />
         </div>
     );
 };

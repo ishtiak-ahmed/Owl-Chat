@@ -1,30 +1,24 @@
 const User = require("../Models/UserModel");
 const generateToken = require('../Utils/generateToken');
 const decodeToken = require('../Utils/decodeToken');
+const asyncHandler = require('express-async-handler');
 
 const secondsInWeek = 604800;
 
-const catchAsync = fn => {
-    return () => {
-        fn(req, res, next).catch(err => next(err));
-    }
-}
-
-exports.loginUser = catchAsync(async(req, res, next) => {
+exports.loginUser = asyncHandler(async(req, res, next) => {
     const {email, password} = req.body;
     const user = await User.findOne({email});
 
-    if(user && user.MatchPassword(password)){
+    if(user && user.matchPassword(password)){
         const token = generateToken(user._id);
 
-        res.cookie('token', token, {httpOnly: true, maxAge: secondsInWeek * 4 * 1000});
-
+        res.cookie('token', token, {httpOnly: true, maxAge: secondsInWeek * 4000});
         res.status(200).json({
             success: {
                 user: {
                     id: user._id,
                     name: user.fullName,
-                    email: user.email
+                    email: user.email,
                 }
             }
         })
@@ -33,13 +27,12 @@ exports.loginUser = catchAsync(async(req, res, next) => {
     }    
 });
 
-exports.registerUser = catchAsync(async(req, res, next) => {
+exports.registerUser = asyncHandler(async(req, res, next) => {
     const newUser = await User.create(req.body);
-
     if(newUser){
         const token = generateToken(newUser._id);
 
-        res.cookie('token', token, {httpOnly: true, maxAge: secondsInWeek * 4 * 1000});
+        res.cookie('token', token, {httpOnly: true, maxAge: secondsInWeek * 4000});
         res.status(200).json({
             success: {
                 user: {
@@ -49,14 +42,25 @@ exports.registerUser = catchAsync(async(req, res, next) => {
                 }
             }
         })
+    }else{
+        res.status(401).json({status: 'fail', message: 'Something went wrong..'})
     }
 })
 
-exports.loadUser = catchAsync(async(req,res,next) => {
-    
+exports.loadUser = asyncHandler(async(req,res,next) => {
+    console.log('loading user..')
+    res.cookie('ping', 'Setting a ping message');
+
+    const user = await decodeToken(req.cookies.token)
+    if(user){
+        res.status(201).json({success: {name: user.fullName, email: user.email, id: user._id}})
+    }else{
+        res.status(400).json({status: 'fail', message: "no user logged in.."})
+    }
 })
 
-exports.logOut = catchAsync(async(req,res,next) => {
+exports.logOut = asyncHandler(async(req,res,next) => {
+    console.log(next)
     res.clearCookie('token');
-    res.send('You have succesfully log out.')
+    res.status(202).send('You have succesfully log out.')
 })

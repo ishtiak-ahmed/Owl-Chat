@@ -7,7 +7,7 @@ const generateToken = id =>
     },
     process.env.SECRET_KEY,
     {
-      expiresIn: "7d"
+      expiresIn: "30d"
     }
   );
 
